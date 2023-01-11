@@ -1,32 +1,22 @@
-import {
-  createWasmAminoConverters,
-  SigningCosmWasmClient,
-} from '@cosmjs/cosmwasm-stargate'
-import {
-  AminoTypes,
-  createIbcAminoConverters,
-  GasPrice,
-} from '@cosmjs/stargate'
+import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
+import { GasPrice } from '@cosmjs/stargate'
 import { useEffect } from 'react'
 import { useMutation } from 'react-query'
 import { useRecoilState } from 'recoil'
-
 import { walletState, WalletStatusType } from '../state/atoms/walletAtoms'
 import { GAS_PRICE } from '../util/constants'
 import { useChainInfo } from './useChainInfo'
+import { getOfflineSigner } from '@cosmostation/cosmos-client'
+import { useLocalStorage } from '@rehooks/local-storage'
 
 export const useConnectWallet = (
   mutationOptions?: Parameters<typeof useMutation>[2]
 ) => {
   const [{ status }, setWalletState] = useRecoilState(walletState)
   const [chainInfo] = useChainInfo()
+  const [selectedWalletType] = useLocalStorage('selectedWalletType')
 
   const mutation = useMutation(async () => {
-    if (window && !window?.keplr) {
-      alert('Please install Keplr extension and refresh the page.')
-      return
-    }
-
     /* set the fetching state */
     setWalletState((value) => ({
       ...value,
@@ -34,50 +24,109 @@ export const useConnectWallet = (
       state: WalletStatusType.connecting,
     }))
 
-    try {
-      await window.keplr.experimentalSuggestChain(chainInfo)
-      await window.keplr.enable(chainInfo.chainId)
+    const useKeplr = async () => {
+      if (window && !window?.keplr) {
+        alert('Please install Keplr extension and refresh the page.')
+        return
+      }
 
-      const offlineSigner = await window.getOfflineSignerAuto(chainInfo.chainId)
-      const wasmChainClient = await SigningCosmWasmClient.connectWithSigner(
-        chainInfo.rpc,
-        offlineSigner,
-        {
-          gasPrice: GasPrice.fromString(GAS_PRICE),
-          /*
-           * passing ibc amino types for all the amino signers (eg ledger, wallet connect)
-           * to enable ibc & wasm transactions
-           * */
-          aminoTypes: new AminoTypes(
-            Object.assign(
-              createIbcAminoConverters(),
-              createWasmAminoConverters()
-            )
-          ),
+      try {
+        await window.keplr.experimentalSuggestChain(chainInfo)
+        await window.keplr.enable(chainInfo.chainId)
+
+        const offlineSigner = await window.getOfflineSignerAuto(
+          chainInfo.chainId
+        )
+        const wasmChainClient = await SigningCosmWasmClient.connectWithSigner(
+          chainInfo.rpc,
+          offlineSigner,
+          {
+            gasPrice: GasPrice.fromString(GAS_PRICE),
+          }
+        )
+
+        const [{ address }] = await offlineSigner.getAccounts()
+        const key = await window.keplr.getKey(chainInfo.chainId)
+
+        /* successfully update the wallet state */
+        setWalletState({
+          name: key.name,
+          address,
+          client: wasmChainClient,
+          status: WalletStatusType.connected,
+        })
+      } catch (e) {
+        /* set the error state */
+        setWalletState({
+          name: '',
+          address: '',
+          client: null,
+          status: WalletStatusType.error,
+        })
+
+        /* throw the error for the UI */
+        throw e
+      }
+    }
+
+    const useCosmostation = async () => {
+      if (window && !window?.cosmostation) {
+        alert('Please install cosmostation extension')
+        return
+      }
+
+      try {
+        const offlineSigner = await getOfflineSigner(chainInfo.chainId)
+        const wasmChainClient = await SigningCosmWasmClient.connectWithSigner(
+          chainInfo.rpc,
+          offlineSigner,
+          {
+            gasPrice: GasPrice.fromString(GAS_PRICE),
+          }
+        )
+
+        const accout = await window.cosmostation.cosmos.request({
+          method: 'cos_requestAccount',
+          params: { chainName: 'Taxblock' },
+        })
+
+        // successfully update the wallet state
+        setWalletState({
+          name: accout.name,
+          address: accout.address,
+          client: wasmChainClient,
+          status: WalletStatusType.connected,
+        })
+      } catch (e) {
+        /* set the error state */
+        setWalletState({
+          name: '',
+          address: '',
+          client: null,
+          status: WalletStatusType.error,
+        })
+
+        /* throw the error for the UI */
+        throw e
+      }
+    }
+
+    switch (selectedWalletType) {
+      case 'keplr': {
+        if (chainInfo) {
+          await useKeplr()
         }
-      )
-
-      const [{ address }] = await offlineSigner.getAccounts()
-      const key = await window.keplr.getKey(chainInfo.chainId)
-
-      /* successfully update the wallet state */
-      setWalletState({
-        key,
-        address,
-        client: wasmChainClient,
-        status: WalletStatusType.connected,
-      })
-    } catch (e) {
-      /* set the error state */
-      setWalletState({
-        key: null,
-        address: '',
-        client: null,
-        status: WalletStatusType.error,
-      })
-
-      /* throw the error for the UI */
-      throw e
+        break
+      }
+      case 'ibc_wallet': {
+        if (chainInfo) {
+          await useCosmostation()
+        }
+        break
+      }
+      default: {
+        break
+      }
     }
   }, mutationOptions)
 
@@ -103,6 +152,21 @@ export const useConnectWallet = (
       return () => {
         window.removeEventListener('keplr_keystorechange', reconnectWallet)
       }
+    },
+    // eslint-disable-next-line
+    [status]
+  )
+
+  useEffect(
+    function listenToWalletAddressChangeInKeplr() {
+      function reconnectWallet() {
+        if (status === WalletStatusType.connected) {
+          mutation.mutate(null)
+        }
+      }
+
+      window?.cosmostation?.cosmos.on('accountChanged', () => reconnectWallet)
+      return () => {}
     },
     // eslint-disable-next-line
     [status]

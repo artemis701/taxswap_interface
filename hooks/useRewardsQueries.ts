@@ -32,15 +32,14 @@ export const usePendingRewards = ({ pool }: UsePendingRewardsArgs) => {
     async () => {
       if (shouldQueryRewards) {
         return await Promise.all(
-          pool.rewards_tokens.map(async (rewardsToken) => {
-            const { rewards_address, decimals } = rewardsToken
+          pool.rewards_tokens.map(async ({ rewards_address, decimals }) => {
             const { pending_rewards, denom } = await getPendingRewards(
               address,
               rewards_address,
               client
             )
 
-            const tokenInfo = getTokenInfoByDenom({ denom }) || rewardsToken
+            const tokenInfo = getTokenInfoByDenom({ denom })
             const tokenAmount = convertMicroDenomToDenom(
               Number(pending_rewards),
               decimals ?? tokenInfo.decimals

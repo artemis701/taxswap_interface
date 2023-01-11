@@ -1,3 +1,4 @@
+import { useUpdateEffect } from '@reach/utils'
 import { AppLayout, PageHeader } from 'components'
 import {
   ButtonWithDropdownForSorting,
@@ -16,7 +17,6 @@ import {
   Text,
 } from 'junoblocks'
 import React, { useMemo, useState } from 'react'
-import { useUpdateEffect } from 'react-use'
 
 import { useQueriesDataSelector } from '../../hooks/useQueriesDataSelector'
 import { usePoolsListQuery } from '../../queries/usePoolsListQuery'
@@ -197,9 +197,13 @@ const useSortControllers = () => {
 
 const StyledDivForPoolsGrid = styled('div', {
   display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
+  gridTemplateColumns: '1fr 1fr 1fr 1fr',
   columnGap: '$8',
   rowGap: '$8',
+
+  '@media (max-width: 1550px)': {
+    gridTemplateColumns: '1fr 1fr 1fr',
+  },
 
   '@media (max-width: 1360px)': {
     gridTemplateColumns: '1fr 1fr',

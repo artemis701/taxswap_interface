@@ -1,0 +1,47 @@
+{
+  "chainId": "taxblock-1",
+  "chainName": "Taxblock",
+  "rpc": "https://rpc.taxblock.wtf:443/",
+  "rest": "https://api.taxblock.wtf:443/",
+  "stakeCurrency": {
+    "coinDenom": "TAX",
+    "coinMinimalDenom": "utax",
+    "coinDecimals": 6,
+    "coinGeckoId": "taxblock-token"
+  },
+  "bip44": {
+    "coinType": 118
+  },
+  "bech32Config": {
+    "bech32PrefixAccAddr": "taxblock",
+    "bech32PrefixAccPub": "taxblockpub",
+    "bech32PrefixValAddr": "taxblockvaloper",
+    "bech32PrefixValPub": "taxblockvaloperpub",
+    "bech32PrefixConsAddr": "taxblockvalcons",
+    "bech32PrefixConsPub": "taxblockvalconspub"
+  },
+  "currencies": [
+    {
+      "coinDenom": "TAX",
+      "coinMinimalDenom": "utax",
+      "coinDecimals": 6,
+      "coinGeckoId": "taxblock-token"
+    }
+  ],
+  "feeCurrencies": [
+    {
+      "coinDenom": "TAX",
+      "coinMinimalDenom": "utax",
+      "coinDecimals": 6,
+      "coinGeckoId": "taxblock-token"
+    }
+  ],
+  "coinType": 118,
+  "gasPriceStep": {
+    "low": 1,
+    "average": 5,
+    "high": 10
+  },
+  "features": ["cosmwasm", "stargate", "ibc-transfer", "ibc-go"],
+  "walletUrlForStaking": "https://taxblock.omniflix.co/stake"
+}

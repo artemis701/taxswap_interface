@@ -1,5 +1,5 @@
 import { useTokenList } from 'hooks/useTokenList'
-import { styled, useMedia } from 'junoblocks'
+import { styled, useMedia, usePersistance } from 'junoblocks'
 import { useEffect, useRef } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import {
@@ -64,11 +64,20 @@ export const TokenSwapModule = ({ initialTokenPair }: TokenSwapModuleProps) => {
   const uiSize = useMedia('sm') ? 'small' : 'large'
 
   /* fetch token to token price */
-  const [{ price: tokenPrice }, isPriceLoading] = useTokenToTokenPrice({
+  const [currentTokenPrice, isPriceLoading] = useTokenToTokenPrice({
     tokenASymbol: tokenA?.tokenSymbol,
     tokenBSymbol: tokenB?.tokenSymbol,
-    tokenAmount: tokenA?.amount || 0,
+    tokenAmount: tokenA?.amount,
   })
+
+  /* persist token price when querying a new one */
+  const persistTokenPrice = usePersistance(
+    isPriceLoading ? undefined : currentTokenPrice
+  )
+
+  /* select token price */
+  const tokenPrice =
+    (isPriceLoading ? persistTokenPrice : currentTokenPrice) || 0
 
   const handleSwapTokenPositions = () => {
     setTokenSwapState([
@@ -91,6 +100,8 @@ export const TokenSwapModule = ({ initialTokenPair }: TokenSwapModuleProps) => {
         />
         <TransactionTips
           disabled={isUiDisabled}
+          isPriceLoading={isPriceLoading}
+          tokenToTokenPrice={tokenPrice}
           onTokenSwaps={handleSwapTokenPositions}
           size={uiSize}
         />
@@ -105,7 +116,12 @@ export const TokenSwapModule = ({ initialTokenPair }: TokenSwapModuleProps) => {
           size={uiSize}
         />
       </StyledDivForWrapper>
-      <TransactionAction isPriceLoading={isPriceLoading} size={uiSize} />
+
+      <TransactionAction
+        isPriceLoading={isPriceLoading}
+        tokenToTokenPrice={tokenPrice}
+        size={uiSize}
+      />
     </>
   )
 }

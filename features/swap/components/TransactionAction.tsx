@@ -1,10 +1,12 @@
+import { useConnectWallet } from 'hooks/useConnectWallet'
 import { useTokenBalance } from 'hooks/useTokenBalance'
 import { Button, Inline, Spinner, styled, Text } from 'junoblocks'
-import { useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRecoilState, useRecoilValue } from 'recoil'
 import { walletState, WalletStatusType } from 'state/atoms/walletAtoms'
+import { NETWORK_FEE } from 'util/constants'
 
-import { useTokenSwap, useSwapFee } from '../hooks'
+import { useTokenSwap } from '../hooks'
 import { slippageAtom, tokenSwapAtom } from '../swapAtoms'
 import { SlippageSelector } from './SlippageSelector'
 
@@ -16,13 +18,16 @@ type TransactionTipsProps = {
 
 export const TransactionAction = ({
   isPriceLoading,
+  tokenToTokenPrice,
   size = 'large',
 }: TransactionTipsProps) => {
+  const [requestedSwap, setRequestedSwap] = useState(false)
   const [tokenA, tokenB] = useRecoilValue(tokenSwapAtom)
   const { balance: tokenABalance } = useTokenBalance(tokenA?.tokenSymbol)
 
   /* wallet state */
   const { status } = useRecoilValue(walletState)
+  const { mutate: connectWallet } = useConnectWallet()
   const [slippage, setSlippage] = useRecoilState(slippageAtom)
 
   const { mutate: handleSwap, isLoading: isExecutingTransaction } =
@@ -30,24 +35,35 @@ export const TransactionAction = ({
       tokenASymbol: tokenA?.tokenSymbol,
       tokenBSymbol: tokenB?.tokenSymbol,
       tokenAmount: tokenA?.amount,
+      tokenToTokenPrice: tokenToTokenPrice || 0,
     })
 
-  const swapButtonDisabled =
+  /* proceed with the swap only if the price is loaded */
+
+  useEffect(() => {
+    const shouldTriggerTransaction =
+      !isPriceLoading && !isExecutingTransaction && requestedSwap
+    if (shouldTriggerTransaction) {
+      handleSwap()
+      setRequestedSwap(false)
+    }
+  }, [isPriceLoading, isExecutingTransaction, requestedSwap, handleSwap])
+
+  const handleSwapButtonClick = () => {
+    if (status === WalletStatusType.connected) {
+      return setRequestedSwap(true)
+    }
+
+    connectWallet(null)
+  }
+
+  const shouldDisableSubmissionButton =
     isExecutingTransaction ||
     !tokenB.tokenSymbol ||
     !tokenA.tokenSymbol ||
     status !== WalletStatusType.connected ||
     tokenA.amount <= 0 ||
-    tokenA?.amount > tokenABalance ||
-    isPriceLoading
-
-  const handleSwapButtonClick = useCallback(() => {
-    if (!swapButtonDisabled) {
-      handleSwap()
-    }
-  }, [swapButtonDisabled, handleSwap])
-
-  const swapFee = useSwapFee({ tokenA, tokenB })
+    tokenA?.amount > tokenABalance
 
   if (size === 'small') {
     return (
@@ -70,14 +86,18 @@ export const TransactionAction = ({
           <Text variant="legend" transform="uppercase">
             Swap fee
           </Text>
-          <Text variant="legend">{swapFee}%</Text>
+          <Text variant="legend">{NETWORK_FEE * 100}%</Text>
         </Inline>
         <Inline css={{ display: 'grid', paddingTop: '$8' }}>
           <Button
             variant="primary"
             size="large"
-            disabled={swapButtonDisabled}
-            onClick={handleSwapButtonClick}
+            disabled={shouldDisableSubmissionButton}
+            onClick={
+              !isExecutingTransaction && !isPriceLoading
+                ? handleSwapButtonClick
+                : undefined
+            }
           >
             {isExecutingTransaction ? <Spinner instant /> : 'Swap'}
           </Button>
@@ -97,14 +117,18 @@ export const TransactionAction = ({
           />
         </StyledDivColumnForInfo>
         <StyledDivColumnForInfo kind="fees">
-          <Text variant="legend">Swap fee ({swapFee}%)</Text>
+          <Text variant="legend">Swap fee ({NETWORK_FEE * 100}%)</Text>
         </StyledDivColumnForInfo>
       </StyledDivForInfo>
       <Button
         variant="primary"
         size="large"
-        disabled={swapButtonDisabled}
-        onClick={handleSwapButtonClick}
+        disabled={shouldDisableSubmissionButton}
+        onClick={
+          !isExecutingTransaction && !isPriceLoading
+            ? handleSwapButtonClick
+            : undefined
+        }
       >
         {isExecutingTransaction ? <Spinner instant /> : 'Swap'}
       </Button>

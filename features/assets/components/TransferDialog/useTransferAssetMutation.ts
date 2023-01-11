@@ -92,10 +92,10 @@ export const useTransferAssetMutation = ({
             tokenAmount,
             tokenInfo.decimals
           ).toString(),
-          denom: tokenInfo.juno_denom,
+          denom: tokenInfo.taxblock_denom,
         },
         'transfer',
-        tokenInfo.juno_channel,
+        tokenInfo.taxblock_channel,
         undefined,
         timeout,
         '',

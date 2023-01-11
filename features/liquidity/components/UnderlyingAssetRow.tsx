@@ -1,4 +1,5 @@
 import { useTokenDollarValue } from 'hooks/useTokenDollarValue'
+import { useTokenInfo } from 'hooks/useTokenInfo'
 import {
   Button,
   dollarValueFormatterWithDecimals,
@@ -11,24 +12,20 @@ import {
   Tooltip,
 } from 'junoblocks'
 
-import { TokenInfo } from '../../../queries/usePoolsListQuery'
-
 type UnderlyingAssetRowProps = {
-  tokenInfo?: TokenInfo
+  tokenSymbol?: string
   tokenAmount?: number
   visible?: boolean
-  symbolVisible?: boolean
 }
 
 export const UnderlyingAssetRow = ({
-  tokenInfo,
+  tokenSymbol,
   tokenAmount,
   visible = true,
-}: // symbolVisible = true,
-UnderlyingAssetRowProps) => {
-  const token = visible ? tokenInfo : undefined
+}: UnderlyingAssetRowProps) => {
+  const token = useTokenInfo(visible ? tokenSymbol : undefined)
   const [tokenDollarValue] = useTokenDollarValue(
-    visible ? tokenInfo?.symbol : undefined
+    visible ? tokenSymbol : undefined
   )
 
   const tokenAmountDollarValue = dollarValueFormatterWithDecimals(
@@ -41,8 +38,7 @@ UnderlyingAssetRowProps) => {
   return (
     <Inline
       justifyContent="space-between"
-      gap={4}
-      css={{ visibility: visible ? 'visible' : 'hidden', alignItems: 'center' }}
+      css={{ visibility: visible ? 'visible' : 'hidden' }}
     >
       <Inline gap={3}>
         <ImageForTokenLogo
@@ -50,14 +46,14 @@ UnderlyingAssetRowProps) => {
           logoURI={token?.logoURI}
           alt={token?.symbol}
         />
-        <Text variant="link">{token?.symbol}</Text>
+        <Text variant="link">{tokenSymbol}</Text>
       </Inline>
-      <Inline align="center" gap={2}>
-        <Inline gap={5} css={{ alignContent: 'baseline' }}>
+      <Inline align="center" gap={4}>
+        <Inline gap={6}>
           <Text variant="body">
             {formatTokenBalance(tokenAmount, { includeCommaSeparation: true })}
           </Text>
-          <Text variant="secondary">{token?.symbol}</Text>
+          <Text variant="secondary">{tokenSymbol}</Text>
         </Inline>
         <Tooltip label={infoTooltipLabel} aria-label={infoTooltipLabel}>
           <Button

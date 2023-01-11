@@ -1,17 +1,10 @@
 {
   "extends": ["next", "next/core-web-vitals"],
-  "plugins": ["testing-library"],
+  "plugins": ["simple-import-sort"],
   "rules": {
-    "import/no-duplicates": ["error"]
-  },
-  "overrides": [
-    // Only uses Testing Library lint rules in test files
-    {
-      "files": [
-        "**/__tests__/**/*.[jt]s?(x)",
-        "**/?(*.)+(spec|test).[jt]s?(x)"
-      ],
-      "extends": ["plugin:testing-library/react"]
-    }
-  ]
+    "import/no-duplicates": ["error"],
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "react/prop-types": "off"
+  }
 }

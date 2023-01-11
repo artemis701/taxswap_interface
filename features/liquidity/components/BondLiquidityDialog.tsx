@@ -1,3 +1,4 @@
+import { useUpdateEffect } from '@reach/utils'
 import dayjs from 'dayjs'
 import { useBondTokens, useUnbondTokens } from 'hooks/useBondTokens'
 import { useRefetchQueries } from 'hooks/useRefetchQueries'
@@ -23,7 +24,6 @@ import { useQueryPoolLiquidity } from 'queries/useQueryPools'
 import { useQueryPoolUnstakingDuration } from 'queries/useQueryPoolUnstakingDuration'
 import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { useUpdateEffect } from 'react-use'
 import { formatSdkErrorMessage } from 'util/formatSdkErrorMessage'
 
 import { LiquidityInputSelector } from './LiquidityInputSelector'
@@ -324,28 +324,24 @@ export const BondLiquidityDialog = ({
           </Text>
         </Column>
       </DialogContent>
-      <DialogButtons
-        cancellationButton={
-          <Button variant="secondary" onClick={onRequestClose}>
-            Cancel
-          </Button>
-        }
-        confirmationButton={
-          <Button
-            variant="primary"
-            onClick={handleAction}
-            disabled={getIsFormSubmissionDisabled()}
-          >
-            {isLoading ? (
-              <Spinner instant />
-            ) : dialogState === 'stake' ? (
-              'Bond'
-            ) : (
-              'Unbond'
-            )}
-          </Button>
-        }
-      />
+      <DialogButtons>
+        <Button variant="secondary" onClick={onRequestClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleAction}
+          disabled={getIsFormSubmissionDisabled()}
+        >
+          {isLoading ? (
+            <Spinner instant />
+          ) : dialogState === 'stake' ? (
+            'Bond'
+          ) : (
+            'Unbond'
+          )}
+        </Button>
+      </DialogButtons>
     </Dialog>
   )
 }

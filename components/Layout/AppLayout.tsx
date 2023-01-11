@@ -1,13 +1,13 @@
 import { media, styled, useMedia } from 'junoblocks'
-import { APP_MAX_WIDTH, MAIN_PANE_MAX_WIDTH } from 'util/constants'
+import { APP_MAX_WIDTH } from 'util/constants'
 
-import { ExtensionSidebar } from './ExtensionSidebar'
+// import { ExtensionSidebar } from './ExtensionSidebar'
 import { FooterBar } from './FooterBar'
 import { NavigationSidebar } from './NavigationSidebar'
 
 export const AppLayout = ({
   navigationSidebar = <NavigationSidebar />,
-  extensionSidebar = <ExtensionSidebar />,
+  // extensionSidebar = <ExtensionSidebar />,
   footerBar = <FooterBar />,
   children,
 }) => {
@@ -38,19 +38,17 @@ export const AppLayout = ({
         <main>{children}</main>
       </StyledContainer>
 
-      {!isMediumScreen && extensionSidebar}
+      {/* {!isMediumScreen && extensionSidebar} */}
     </StyledWrapper>
   )
 }
 
 const StyledWrapper = styled('div', {
-  display: 'flex',
-  flexDirection: 'row',
-  justifyContent: 'center',
+  display: 'grid',
   minHeight: '100vh',
+  gridTemplateColumns: '16.5rem 1fr 16.5rem',
   backgroundColor: '$backgroundColors$base',
-  width: APP_MAX_WIDTH,
-  maxWidth: '100%',
+  maxWidth: APP_MAX_WIDTH,
   margin: '0 auto',
   [media.md]: {
     gridTemplateColumns: '15rem 1fr',
@@ -59,17 +57,19 @@ const StyledWrapper = styled('div', {
 
 const StyledContainer = styled('div', {
   position: 'relative',
+  zIndex: '$2',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
-  padding: '0 $24 $24 $24',
+  padding: '0 $12 $20 $12',
   '& main': {
     margin: '0 auto',
     width: '100%',
+    maxWidth: '69.5rem',
   },
-  maxWidth: '100%',
-  width: MAIN_PANE_MAX_WIDTH,
-  [media.sm]: {},
+  [media.sm]: {
+    zIndex: '$1',
+  },
 })
 
 const StyledWrapperForMobile = styled('div', {

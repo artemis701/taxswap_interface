@@ -1,3 +1,4 @@
+import { usePrevious } from '@reach/utils'
 import { LiquidityInput } from 'components'
 import { useTokenDollarValue } from 'hooks/useTokenDollarValue'
 import {
@@ -20,7 +21,6 @@ import {
 } from 'junoblocks'
 import { useQueryPoolLiquidity } from 'queries/useQueryPools'
 import { useEffect, useRef, useState } from 'react'
-import { usePrevious } from 'react-use'
 
 import { LiquidityInputSelector } from '../LiquidityInputSelector'
 import { PercentageSelection } from '../PercentageSelection'
@@ -155,25 +155,21 @@ export const ManagePoolDialog = ({
 
       <DialogDivider offsetTop="$16" offsetBottom="$8" />
 
-      <DialogButtons
-        cancellationButton={
-          <Button variant="secondary" onClick={onRequestClose}>
-            Cancel
-          </Button>
-        }
-        confirmationButton={
-          <Button
-            variant="primary"
-            onClick={isLoading ? undefined : handleSubmit}
-          >
-            {isLoading ? (
-              <Spinner instant={true} size={16} />
-            ) : (
-              <>{isAddingLiquidity ? 'Add' : 'Remove'} liquidity</>
-            )}
-          </Button>
-        }
-      />
+      <DialogButtons>
+        <Button variant="secondary" onClick={onRequestClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={isLoading ? undefined : handleSubmit}
+        >
+          {isLoading ? (
+            <Spinner instant={true} size={16} />
+          ) : (
+            <>{isAddingLiquidity ? 'Add' : 'Remove'} liquidity</>
+          )}
+        </Button>
+      </DialogButtons>
     </Dialog>
   )
 }
@@ -260,10 +256,11 @@ function RemoveLiquidityContent({
     percentageInputRef.current?.focus()
   }, [])
 
-  const availableLiquidityDollarValue = dollarValueFormatter(
-    tokenAReserve * 2 * tokenAPrice
-  ) as number
+  // const availableLiquidityDollarValue = dollarValueFormatter(
+  //   tokenAReserve * 2 * tokenAPrice
+  // ) as number
 
+  const availableLiquidityDollarValue = tokenAReserve * 2 * tokenAPrice
   const liquidityToRemove = availableLiquidityDollarValue * liquidityPercentage
 
   const handleChangeLiquidity = (value) => {

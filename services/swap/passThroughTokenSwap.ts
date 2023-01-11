@@ -1,7 +1,7 @@
 import { SigningCosmWasmClient } from '@cosmjs/cosmwasm-stargate'
 import { coin } from '@cosmjs/stargate'
 
-import { PoolEntityType, TokenInfo } from '../../queries/usePoolsListQuery'
+import { TokenInfo } from '../../queries/usePoolsListQuery'
 import {
   createExecuteMessage,
   createIncreaseAllowanceMessage,
@@ -13,8 +13,8 @@ type PassThroughTokenSwapArgs = {
   price: number
   slippage: number
   senderAddress: string
-  inputPool: PoolEntityType
-  outputPool: PoolEntityType
+  swapAddress: string
+  outputSwapAddress: string
   tokenA: TokenInfo
   client: SigningCosmWasmClient
 }
@@ -22,8 +22,8 @@ type PassThroughTokenSwapArgs = {
 export const passThroughTokenSwap = async ({
   tokenAmount,
   tokenA,
-  outputPool,
-  inputPool,
+  outputSwapAddress,
+  swapAddress,
   senderAddress,
   slippage,
   price,
@@ -31,15 +31,12 @@ export const passThroughTokenSwap = async ({
 }: PassThroughTokenSwapArgs): Promise<any> => {
   const minOutputToken = Math.floor(price * (1 - slippage))
 
-  const input_token =
-    inputPool.pool_assets[0].symbol === tokenA.symbol ? 'Token1' : 'Token2'
-
   const swapMessage = {
     pass_through_swap: {
       output_min_token: `${minOutputToken}`,
-      input_token,
+      input_token: 'Token2',
       input_token_amount: `${tokenAmount}`,
-      output_amm_address: outputPool.swap_address,
+      output_amm_address: outputSwapAddress,
     },
   }
 
@@ -48,12 +45,12 @@ export const passThroughTokenSwap = async ({
       senderAddress,
       tokenAmount,
       tokenAddress: tokenA.token_address,
-      swapAddress: inputPool.swap_address,
+      swapAddress,
     })
 
     const executeMessage = createExecuteMessage({
       senderAddress,
-      contractAddress: inputPool.swap_address,
+      contractAddress: swapAddress,
       message: swapMessage,
     })
 
@@ -68,7 +65,7 @@ export const passThroughTokenSwap = async ({
 
   return await client.execute(
     senderAddress,
-    inputPool.swap_address,
+    swapAddress,
     swapMessage,
     'auto',
     undefined,

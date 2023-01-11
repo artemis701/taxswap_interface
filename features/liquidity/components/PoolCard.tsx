@@ -123,7 +123,7 @@ export const PoolCard = ({
                 <Text variant="legend" color="secondary" align="center">
                   Rewards
                 </Text>
-                <StyledDivForTokenLogos css={{ padding: '$1' }}>
+                <StyledDivForTokenLogos css={{ paddingTop: '0' }}>
                   {rewardsTokens.map((token) => (
                     <ImageForTokenLogo
                       key={token.symbol}

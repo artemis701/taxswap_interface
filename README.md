@@ -1,4 +1,4 @@
-## Taxswap interface
+## Wasmswap interface
 
 An open-source interface for a CosmWasm decentralized exchange.
 
@@ -78,10 +78,10 @@ NEXT_PUBLIC_IBC_ASSETS_URL=https://raw.githubusercontent.com/Wasmswap/asset-list
 
 ### App name
 
-By default, the app uses the `Taxswap` name. To update the app name, go to the `.env` file and change the following variable:
+By default, the app uses the `Wasmswap` name. To update the app name, go to the `.env` file and change the following variable:
 
 ```
-NEXT_PUBLIC_SITE_TITLE=Taxswap
+NEXT_PUBLIC_SITE_TITLE=Wasmswap
 ```
 
 That will change the site title and update the footer.
@@ -132,7 +132,7 @@ To update the typography component configuration, go to `components/Text.tsx` an
 
 ## How to deploy
 
-This is a nextjs app; thus everything that a nextjs app supports for deployment technically is supported by `taxswap-interface`. We would recommend looking into Vercel.
+This is a nextjs app; thus everything that a nextjs app supports for deployment technically is supported by `wasmswap-interface`. We would recommend looking into Vercel.
 
 ## Contributing
 

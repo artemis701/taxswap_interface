@@ -9,3 +9,8 @@ export const transactionStatusState = atom<TransactionStatus>({
   key: 'transactionState',
   default: TransactionStatus.IDLE,
 })
+
+export const createTokenStatusState = atom<any>({
+  key: 'createTokenState',
+  default: null,
+})

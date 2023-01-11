@@ -8,8 +8,8 @@ export type IBCAssetInfo = {
   rpc: string
   denom: string
   decimals: number
-  juno_denom: string
-  juno_channel: string
+  taxblock_denom: string
+  taxblock_channel: string
   channel: string
   logoURI: string
   deposit_gas_fee?: number

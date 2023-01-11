@@ -75,7 +75,7 @@ export const ManageLiquidityCard = ({
     >
       <CardContent>
         <Text variant="legend" color="body" css={{ padding: '$16 0 $6' }}>
-          Holdings
+          Your liquidity
         </Text>
         <Text variant="hero">${providedLiquidityDollarValue}</Text>
         <Text variant="link" color="brand" css={{ paddingTop: '$2' }}>
@@ -93,8 +93,14 @@ export const ManageLiquidityCard = ({
           Underlying assets
         </Text>
         <Column gap={6} css={{ paddingBottom: '$16' }}>
-          <UnderlyingAssetRow tokenInfo={tokenA} tokenAmount={tokenAReserve} />
-          <UnderlyingAssetRow tokenInfo={tokenB} tokenAmount={tokenBReserve} />
+          <UnderlyingAssetRow
+            tokenSymbol={tokenA.symbol}
+            tokenAmount={tokenAReserve}
+          />
+          <UnderlyingAssetRow
+            tokenSymbol={tokenB.symbol}
+            tokenAmount={tokenBReserve}
+          />
         </Column>
         <Inline css={{ paddingBottom: '$12' }}>
           {didProvideLiquidity && (

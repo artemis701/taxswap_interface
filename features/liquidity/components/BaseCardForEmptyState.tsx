@@ -4,12 +4,7 @@ export const BaseCardForEmptyState = ({ content, footer, ...props }) => {
   return (
     <Card
       variant="ghost"
-      css={{
-        display: 'flex',
-        padding: '$17 0',
-        height: '100%',
-        ...(props.css ?? {}),
-      }}
+      css={{ display: 'flex', padding: '$17 0', ...(props.css ?? {}) }}
       {...props}
     >
       <Column align="center" justifyContent="space-between" css={{ flex: 1 }}>

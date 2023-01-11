@@ -33,7 +33,7 @@ async function fetchTokenBalance({
   }
 
   /*
-   * if this is a native asset or an ibc asset that has juno_denom
+   * if this is a native asset or an ibc asset that has taxblock_denom
    *  */
   if (native) {
     const coin = await client.getBalance(address, denom)
@@ -53,19 +53,45 @@ async function fetchTokenBalance({
 }
 
 const mapIbcTokenToNative = (ibcToken?: IBCAssetInfo) => {
-  if (ibcToken?.juno_denom) {
+  if (ibcToken?.taxblock_denom) {
     return {
       ...ibcToken,
       native: true,
-      denom: ibcToken.juno_denom,
+      denom: ibcToken.taxblock_denom,
     }
   }
   return undefined
 }
 
+export const useNativeBalance = (tokenSymbol: string) => {
+  const { address, status, client } = useRecoilValue(walletState)
+  const [tokenList] = useTokenList()
+  const tokenInfo = tokenList?.base_token
+
+  const { data: balance = 0, isLoading } = useQuery(
+    ['tokenBalance', tokenSymbol, address],
+    async ({ queryKey: [, symbol] }) => {
+      if (symbol && client && tokenInfo) {
+        return await fetchTokenBalance({
+          client,
+          address,
+          token: tokenInfo,
+        })
+      }
+    },
+    {
+      enabled: Boolean(tokenSymbol && status === WalletStatusType.connected),
+      refetchOnMount: 'always',
+      refetchInterval: DEFAULT_TOKEN_BALANCE_REFETCH_INTERVAL,
+      refetchIntervalInBackground: true,
+    }
+  )
+
+  return { balance, isLoading }
+}
+
 export const useTokenBalance = (tokenSymbol: string) => {
   const { address, status, client } = useRecoilValue(walletState)
-
   const tokenInfo = useTokenInfo(tokenSymbol)
   const ibcAssetInfo = useIBCAssetInfo(tokenSymbol)
 

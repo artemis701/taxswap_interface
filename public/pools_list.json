@@ -1,0 +1,61 @@
+{
+  "name": "Pool list",
+  "base_token": {
+    "id": "taxblock-token",
+    "chain_id": "taxblock-1",
+    "token_address": "",
+    "symbol": "TAX",
+    "name": "Taxblock",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/ChihuahuaChain/resources/main/logo/logo_transparent_notext.png",
+    "tags": ["native"],
+    "native": true,
+    "denom": "utax"
+  },
+  "logoURI": "",
+  "keywords": ["special tokens"],
+  "tags": {
+    "Taxblock": {
+      "name": "Taxblock",
+      "description": "Tokens that are listed on Taxblock"
+    }
+  },
+  "timestamp": "Sept 08 2022",
+  "pools": [
+    {
+      "pool_id": "TAX-PUPPY",
+      "pool_assets": [
+        {
+          "id": "taxblock-token",
+          "chain_id": "taxblock-1",
+          "token_address": "",
+          "symbol": "TAX",
+          "name": "TAX",
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/ChihuahuaChain/resources/main/logo/logo_transparent_notext.png",
+          "tags": ["native"],
+          "native": true,
+          "denom": "utax"
+        },
+        {
+          "id": "PUPPYTAX",
+          "chain_id": "taxblock-1",
+          "token_address": "taxblock1yl8z39ugle8s02fpwkhh293509q5xcpalmdzc4amvchz8nkexrmsy95gef",
+          "symbol": "PUPPY",
+          "name": "PUPPY",
+          "decimals": 6,
+          "logoURI": "https://raw.githubusercontent.com/ChihuahuaChain/resources/main/puppyhuahua/puppyhuahua_logo.png",
+          "tags": ["cw20"],
+          "native": false,
+          "denom": "PUPPYTAX"
+        }
+      ],
+      "swap_address": "taxblock14v5vk5dgqp0xq8zrhhsf833h2d6tnm0pt0a3gsrkz8gwpwf203eqk58afh"
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  }
+}

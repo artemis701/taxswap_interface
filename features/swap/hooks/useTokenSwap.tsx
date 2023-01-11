@@ -2,7 +2,6 @@ import { useTokenInfo } from 'hooks/useTokenInfo'
 import {
   Button,
   ErrorIcon,
-  formatSdkErrorMessage,
   IconWrapper,
   Toast,
   UpRightArrow,
@@ -20,21 +19,22 @@ import { walletState, WalletStatusType } from 'state/atoms/walletAtoms'
 import { convertDenomToMicroDenom } from 'util/conversion'
 
 import { useRefetchQueries } from '../../../hooks/useRefetchQueries'
-import { formatCompactNumber } from '../../../util/formatCompactNumber'
+import { useQueryMatchingPoolForSwap } from '../../../queries/useQueryMatchingPoolForSwap'
 import { slippageAtom, tokenSwapAtom } from '../swapAtoms'
-import { useTokenToTokenPrice } from './useTokenToTokenPrice'
 
 type UseTokenSwapArgs = {
   tokenASymbol: string
   tokenBSymbol: string
   /* token amount in denom */
   tokenAmount: number
+  tokenToTokenPrice: number
 }
 
 export const useTokenSwap = ({
   tokenASymbol,
   tokenBSymbol,
   tokenAmount: providedTokenAmount,
+  tokenToTokenPrice,
 }: UseTokenSwapArgs) => {
   const { client, address, status } = useRecoilValue(walletState)
   const setTransactionState = useSetRecoilState(transactionStatusState)
@@ -43,13 +43,8 @@ export const useTokenSwap = ({
 
   const tokenA = useTokenInfo(tokenASymbol)
   const tokenB = useTokenInfo(tokenBSymbol)
+  const [matchingPools] = useQueryMatchingPoolForSwap({ tokenA, tokenB })
   const refetchQueries = useRefetchQueries(['tokenBalance'])
-
-  const [tokenToTokenPrice] = useTokenToTokenPrice({
-    tokenASymbol,
-    tokenBSymbol,
-    tokenAmount: providedTokenAmount,
-  })
 
   return useMutation(
     'swapTokens',
@@ -65,24 +60,21 @@ export const useTokenSwap = ({
         tokenA.decimals
       )
 
-      const price = convertDenomToMicroDenom(
-        tokenToTokenPrice.price,
-        tokenB.decimals
-      )
+      const price = convertDenomToMicroDenom(tokenToTokenPrice, tokenB.decimals)
 
       const {
-        poolForDirectTokenAToTokenBSwap,
-        poolForDirectTokenBToTokenASwap,
-        passThroughPools,
-      } = tokenToTokenPrice
+        streamlinePoolAB,
+        streamlinePoolBA,
+        baseTokenAPool,
+        baseTokenBPool,
+      } = matchingPools
 
-      if (poolForDirectTokenAToTokenBSwap || poolForDirectTokenBToTokenASwap) {
-        const swapDirection = poolForDirectTokenAToTokenBSwap?.swap_address
+      if (streamlinePoolAB || streamlinePoolBA) {
+        const swapDirection = streamlinePoolAB?.swap_address
           ? 'tokenAtoTokenB'
           : 'tokenBtoTokenA'
         const swapAddress =
-          poolForDirectTokenAToTokenBSwap?.swap_address ??
-          poolForDirectTokenBToTokenASwap?.swap_address
+          streamlinePoolAB?.swap_address ?? streamlinePoolBA?.swap_address
 
         return await directTokenSwap({
           tokenAmount,
@@ -96,22 +88,14 @@ export const useTokenSwap = ({
         })
       }
 
-      // Smoke test
-      if (!passThroughPools?.length) {
-        throw new Error(
-          'Could not find a valid swap route. Try swapping to a different asset.'
-        )
-      }
-
-      const [passThroughPool] = passThroughPools
       return await passThroughTokenSwap({
         tokenAmount,
         price,
         slippage,
         senderAddress: address,
         tokenA,
-        inputPool: passThroughPool.inputPool,
-        outputPool: passThroughPool.outputPool,
+        swapAddress: baseTokenAPool.swap_address,
+        outputSwapAddress: baseTokenBPool.swap_address,
         client,
       })
     },
@@ -119,15 +103,8 @@ export const useTokenSwap = ({
       onSuccess() {
         toast.custom((t) => (
           <Toast
-            icon={<IconWrapper icon={<Valid />} color="primary" />}
-            title="Swap successful"
-            body={`Turned ${formatCompactNumber(
-              providedTokenAmount,
-              'tokenAmount'
-            )} ${tokenA.symbol} to ${formatCompactNumber(
-              tokenToTokenPrice.price,
-              'tokenAmount'
-            )} ${tokenB.symbol}`}
+            icon={<IconWrapper icon={<Valid />} color="valid" />}
+            title="Swap successful!"
             onClose={() => toast.dismiss(t.id)}
           />
         ))
@@ -143,7 +120,12 @@ export const useTokenSwap = ({
         refetchQueries()
       },
       onError(e) {
-        const errorMessage = formatSdkErrorMessage(e)
+        const errorMessage =
+          String(e).length > 300
+            ? `${String(e).substring(0, 150)} ... ${String(e).substring(
+                String(e).length - 150
+              )}`
+            : String(e)
 
         toast.custom((t) => (
           <Toast

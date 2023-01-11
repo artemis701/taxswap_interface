@@ -1,5 +1,5 @@
 import { CSS } from '@stitches/react'
-import { useTokenBalance } from 'hooks/useTokenBalance'
+import { useNativeBalance } from 'hooks/useTokenBalance'
 import { useBaseTokenInfo } from 'hooks/useTokenInfo'
 import {
   Button,
@@ -35,14 +35,14 @@ export const ConnectedWalletButton = ({
   ...props
 }: ConnectedWalletButtonProps) => {
   const baseToken = useBaseTokenInfo()
-  const { balance } = useTokenBalance(baseToken?.symbol)
+  const { balance } = useNativeBalance(baseToken?.symbol)
   const { address } = useRecoilValue(walletState)
 
   if (!connected) {
     return (
       <Column css={{ paddingBottom: '$6' }}>
         <Button onClick={onConnect} size="large" variant="primary" {...props}>
-          Connect Keplr
+          Connect Wallet
         </Button>
       </Column>
     )

@@ -24,7 +24,7 @@ import { AmountInput } from './AmountInput'
 import { AssetSelector } from './AssetSelector'
 import { TransactionKind } from './types'
 import { useTransferAssetMutation } from './useTransferAssetMutation'
-import { AppWalletInfo, KeplrWalletInfo } from './WalletInfo'
+import { AppWalletInfo, externalWalletInfo } from './WalletInfo'
 
 type TransferDialogProps = {
   tokenSymbol: string
@@ -103,9 +103,9 @@ export const TransferDialog = ({
     transactionKind === 'deposit' ? 'Deposit' : 'Withdraw'
 
   const WalletInfoPerformingActionFrom =
-    transactionKind === 'deposit' ? KeplrWalletInfo : AppWalletInfo
+    transactionKind === 'deposit' ? externalWalletInfo : AppWalletInfo
   const WalletInfoPerformingActionAgainst =
-    transactionKind === 'withdraw' ? KeplrWalletInfo : AppWalletInfo
+    transactionKind === 'withdraw' ? externalWalletInfo : AppWalletInfo
 
   return (
     <Dialog isShowing={isShowing} onRequestClose={onRequestClose}>
@@ -141,26 +141,22 @@ export const TransferDialog = ({
       <DialogContent css={{ paddingBottom: '$8' }}>
         <WalletInfoPerformingActionAgainst depositing={true} />
       </DialogContent>
-      <DialogButtons
-        cancellationButton={
-          <Button onClick={onRequestClose} variant="secondary">
-            Cancel
-          </Button>
-        }
-        confirmationButton={
-          <Button
-            disabled={
-              transactionKind === 'deposit'
-                ? externalIbcAssetBalance <= 0
-                : nativeAssetBalance <= 0
-            }
-            onClick={() => mutateTransferAsset(null)}
-            variant="primary"
-          >
-            {isLoading ? <Spinner instant={true} size={16} /> : 'Transfer'}
-          </Button>
-        }
-      />
+      <DialogButtons>
+        <Button onClick={onRequestClose} variant="secondary">
+          Cancel
+        </Button>
+        <Button
+          disabled={
+            transactionKind === 'deposit'
+              ? externalIbcAssetBalance <= 0
+              : nativeAssetBalance <= 0
+          }
+          onClick={() => mutateTransferAsset(null)}
+          variant="primary"
+        >
+          {isLoading ? <Spinner instant={true} size={16} /> : 'Transfer'}
+        </Button>
+      </DialogButtons>
     </Dialog>
   )
 }

@@ -12,16 +12,20 @@ import {
 import React, { useState } from 'react'
 import { useRecoilValue } from 'recoil'
 
-import { useTokenToTokenPrice, useTxRates } from '../hooks'
+import { useTxRates } from '../hooks'
 import { tokenSwapAtom } from '../swapAtoms'
 
 type TransactionTipsProps = {
+  isPriceLoading: boolean
+  tokenToTokenPrice: number
   onTokenSwaps: () => void
   disabled?: boolean
   size?: 'large' | 'small'
 }
 
 export const TransactionTips = ({
+  isPriceLoading,
+  tokenToTokenPrice,
   onTokenSwaps,
   disabled,
   size = 'large',
@@ -29,18 +33,11 @@ export const TransactionTips = ({
   const [swappedPosition, setSwappedPositions] = useState(false)
   const [tokenA, tokenB] = useRecoilValue(tokenSwapAtom)
 
-  /* fetch token to token price */
-  const [{ price: tokenToTokenPrice }, isPriceLoading] = useTokenToTokenPrice({
-    tokenASymbol: tokenA?.tokenSymbol,
-    tokenBSymbol: tokenB?.tokenSymbol,
-    tokenAmount: tokenA?.amount || 1,
-  })
-
   const { isShowing, conversionRate, conversionRateInDollar, dollarValue } =
     useTxRates({
       tokenASymbol: tokenA?.tokenSymbol,
       tokenBSymbol: tokenB?.tokenSymbol,
-      tokenAAmount: tokenA?.amount || 1,
+      tokenAAmount: tokenA?.amount,
       tokenToTokenPrice,
       isLoading: isPriceLoading,
     })
@@ -112,6 +109,8 @@ export const TransactionTips = ({
           </Text>
         )}
       </StyledDivForRateWrapper>
+
+      <Text variant="legend">${formattedDollarValue}</Text>
     </StyledDivForWrapper>
   )
 }

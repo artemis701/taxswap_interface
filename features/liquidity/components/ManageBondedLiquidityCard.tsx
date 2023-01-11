@@ -116,7 +116,7 @@ export const ManageBondedLiquidityCard = ({
     >
       <CardContent>
         <Text variant="legend" color="body" css={{ padding: '$16 0 $6' }}>
-          Bonded tokens
+          Staked liquidity
         </Text>
         <Text variant="hero">${bondedLiquidityDollarValue}</Text>
         <Text variant="link" color="tertiary" css={{ padding: '$2 0 $14' }}>
@@ -142,8 +142,8 @@ export const ManageBondedLiquidityCard = ({
               css={{ width: '100%' }}
             >
               {supportsIncentives
-                ? 'Manage Bonding'
-                : 'Does not support bonding'}
+                ? 'Manage Staking'
+                : 'Does not support staking'}
             </Button>
           )}
           {!bondedLiquidity && (

@@ -3,7 +3,7 @@ import { usePersistance } from 'junoblocks'
 import { useTokenToTokenPrice } from './useTokenToTokenPrice'
 
 export const usePriceForOneToken = ({ tokenASymbol, tokenBSymbol }) => {
-  const [{ price: currentTokenPrice }, isPriceLoading] = useTokenToTokenPrice({
+  const [currentTokenPrice, isPriceLoading] = useTokenToTokenPrice({
     tokenASymbol: tokenASymbol,
     tokenBSymbol: tokenBSymbol,
     tokenAmount: 1,

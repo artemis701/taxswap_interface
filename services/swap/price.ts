@@ -1,5 +1,4 @@
 import { CosmWasmClient } from '@cosmjs/cosmwasm-stargate'
-import { PoolEntityType, TokenInfo } from '../../queries/usePoolsListQuery'
 
 export interface GetToken1ForToken2PriceInput {
   nativeAmount: number
@@ -49,46 +48,22 @@ export const getToken2ForToken1Price = async ({
 
 export interface GetTokenForTokenPriceInput {
   tokenAmount: number
-  tokenA: TokenInfo
-  tokenB: TokenInfo
-  inputPool: PoolEntityType
-  outputPool: PoolEntityType
+  swapAddress: string
+  outputSwapAddress: string
   client: CosmWasmClient
 }
 
-export const getTokenForTokenPrice = async ({
-  tokenAmount,
-  tokenA,
-  tokenB,
-  inputPool,
-  outputPool,
-  client,
-}: GetTokenForTokenPriceInput) => {
+export const getTokenForTokenPrice = async (
+  input: GetTokenForTokenPriceInput
+) => {
   try {
-    const intermediatePrice =
-      tokenA.symbol === inputPool.pool_assets[0].symbol
-        ? await getToken1ForToken2Price({
-            nativeAmount: tokenAmount,
-            swapAddress: inputPool.swap_address,
-            client,
-          })
-        : await getToken2ForToken1Price({
-            tokenAmount,
-            swapAddress: inputPool.swap_address,
-            client,
-          })
+    const nativePrice = await getToken2ForToken1Price(input)
 
-    return tokenB.symbol === outputPool.pool_assets[1].symbol
-      ? await getToken1ForToken2Price({
-          nativeAmount: intermediatePrice,
-          swapAddress: outputPool.swap_address,
-          client,
-        })
-      : await getToken2ForToken1Price({
-          tokenAmount: intermediatePrice,
-          swapAddress: outputPool.swap_address,
-          client,
-        })
+    return getToken1ForToken2Price({
+      nativeAmount: nativePrice,
+      swapAddress: input.outputSwapAddress,
+      client: input.client,
+    })
   } catch (e) {
     console.error('error(getTokenForTokenPrice)', e)
   }
@@ -100,10 +75,6 @@ export type InfoResponse = {
   token1_reserve: string
   token2_denom: string
   token2_reserve: string
-  owner?: string
-  lp_fee_percent?: string
-  protocol_fee_percent?: string
-  protocol_fee_recipient?: string
 }
 
 export const getSwapInfo = async (
@@ -125,34 +96,5 @@ export const getSwapInfo = async (
     })
   } catch (e) {
     console.error('Cannot get swap info:', e)
-  }
-}
-
-export type FeeResponse = {
-  lp_fee_percent: string
-  owner: string
-  protocol_fee_percent: string
-  protocol_fee_recipient: string
-}
-
-export const getSwapFee = async (
-  swapAddress: string,
-  client: CosmWasmClient
-): Promise<FeeResponse> => {
-  try {
-    if (!swapAddress || !client) {
-      throw new Error(
-        `No swapAddress or rpcEndpoint was provided: ${JSON.stringify({
-          swapAddress,
-          client,
-        })}`
-      )
-    }
-
-    return await client.queryContractSmart(swapAddress, {
-      fee: {},
-    })
-  } catch (e) {
-    console.error('Cannot get swap fee:', e)
   }
 }

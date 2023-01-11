@@ -1,6 +1,13 @@
-import { useConnectWallet } from 'hooks/useConnectWallet'
-import { Logo, LogoText, PoolsIcon } from 'icons'
 import {
+  deleteFromStorage,
+  useLocalStorage,
+  writeStorage,
+} from '@rehooks/local-storage'
+import { useConnectWallet } from 'hooks/useConnectWallet'
+import { Logo, LogoText } from 'icons'
+import {
+  AddressIcon,
+  ArrowUpIcon,
   Button,
   ChevronIcon,
   Column,
@@ -12,6 +19,8 @@ import {
   Inline,
   media,
   MoonIcon,
+  Open,
+  Plus,
   styled,
   Telegram,
   Text,
@@ -25,44 +34,60 @@ import {
 } from 'junoblocks'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { ReactNode, useState } from 'react'
+import React, { ReactNode, useEffect, useState } from 'react'
 import { useRecoilState } from 'recoil'
 import { walletState, WalletStatusType } from 'state/atoms/walletAtoms'
 import { __TEST_MODE__, APP_NAME } from 'util/constants'
-import { Analytics } from '../../icons/Analytics'
-import { Dollar } from '../../icons/Dollar'
-import { SwapIcon } from '../../icons/Swap'
-import { TransferIcon } from '../../icons/Transfer'
+
 import { ConnectedWalletButton } from '../ConnectedWalletButton'
+import { WalletSelectDialog } from '../walletSelectDialog'
 
 type NavigationSidebarProps = {
   shouldRenderBackButton?: boolean
   backButton?: ReactNode
 }
 
-export function NavigationSidebar(_: NavigationSidebarProps) {
+export function NavigationSidebar({
+  shouldRenderBackButton,
+  backButton,
+}: NavigationSidebarProps) {
   const { mutate: connectWallet } = useConnectWallet()
-  const [{ key, address, status }, setWalletState] = useRecoilState(walletState)
+  const [{ name }, setWalletState] = useRecoilState(walletState)
 
   const themeController = useControlTheme()
-
   const isMobile = useMedia('sm')
   const [isOpen, setOpen] = useState(false)
+  const [isDialogOpen, setDialogOpen] = useState(false)
+  const [selectedWalletType] = useLocalStorage('selectedWalletType')
 
   function resetWalletConnection() {
+    deleteFromStorage('selectedWalletType')
+
     setWalletState({
       status: WalletStatusType.idle,
       address: '',
-      key: null,
+      name: '',
       client: null,
     })
   }
 
+  function beginWalletConnection(selectedWalletType: string) {
+    writeStorage('selectedWalletType', selectedWalletType)
+    setDialogOpen(false)
+  }
+
+  // Here we proceed with connecting wallet based on selectedWalletType
+  useEffect(() => {
+    if (selectedWalletType) {
+      connectWallet(null)
+    }
+  }, [selectedWalletType, connectWallet])
+
   const walletButton = (
     <ConnectedWalletButton
-      connected={Boolean(key?.name)}
-      walletName={key?.name}
-      onConnect={() => connectWallet(null)}
+      connected={Boolean(name)}
+      walletName={name}
+      onConnect={() => setDialogOpen(true)}
       onDisconnect={resetWalletConnection}
       css={{ marginBottom: '$8' }}
     />
@@ -78,21 +103,10 @@ export function NavigationSidebar(_: NavigationSidebarProps) {
           as="a"
           variant="menu"
           size="large"
-          iconLeft={<SwapIcon />}
+          iconLeft={<AddressIcon />}
           selected={getIsLinkActive('/')}
         >
-          <Inline css={{ paddingLeft: '$4' }}>Swap</Inline>
-        </Button>
-      </Link>
-      <Link href="/transfer" passHref>
-        <Button
-          as="a"
-          variant="menu"
-          size="large"
-          iconLeft={<TransferIcon />}
-          selected={getIsLinkActive('/transfer')}
-        >
-          <Inline css={{ paddingLeft: '$4' }}>Transfer</Inline>
+          Swap
         </Button>
       </Link>
       <Link href="/pools" passHref>
@@ -100,57 +114,39 @@ export function NavigationSidebar(_: NavigationSidebarProps) {
           as="a"
           variant="menu"
           size="large"
-          iconLeft={<PoolsIcon />}
+          iconLeft={<IconWrapper icon={<Open />} />}
           selected={getIsLinkActive('/pools')}
         >
-          <Inline css={{ paddingLeft: '$4' }}>Pools</Inline>
+          Liquidity
         </Button>
       </Link>
-      <Inline css={{ paddingBottom: '$6' }} />
-      <Link href={process.env.NEXT_PUBLIC_GOVERNANCE_LINK_URL} passHref>
+      <Link href="/transfer" passHref>
         <Button
           as="a"
-          target="__blank"
-          variant="ghost"
+          variant="menu"
           size="large"
-          iconLeft={<IconWrapper icon={<TreasuryIcon />} />}
-          iconRight={<IconWrapper icon={<UpRightArrow />} />}
+          iconLeft={<ArrowUpIcon />}
+          selected={getIsLinkActive('/transfer')}
         >
-          {process.env.NEXT_PUBLIC_GOVERNANCE_LINK_LABEL}
+          Transfer
         </Button>
       </Link>
-      <Link href={process.env.NEXT_PUBLIC_PRICE_LINK_URL} passHref>
+      <Link href="/createtoken" passHref>
         <Button
           as="a"
-          target="__blank"
-          variant="ghost"
+          variant="menu"
           size="large"
-          iconLeft={<IconWrapper icon={<Analytics />} />}
-          iconRight={<IconWrapper icon={<UpRightArrow />} />}
+          iconLeft={<IconWrapper icon={<Plus />} />}
+          selected={getIsLinkActive('/createtoken')}
         >
-          {process.env.NEXT_PUBLIC_PRICE_LINK_LABEL}
-        </Button>
-      </Link>
-      <Link
-        href={`${process.env.NEXT_PUBLIC_KADO_LINK_URL}${
-          status === WalletStatusType.connected ? `&onToAddress=${address}` : ''
-        }`}
-        target="__blank"
-        passHref
-      >
-        <Button
-          as="a"
-          target="__blank"
-          variant="ghost"
-          size="large"
-          iconLeft={<IconWrapper icon={<Dollar />} />}
-          iconRight={<IconWrapper icon={<UpRightArrow />} />}
-        >
-          {process.env.NEXT_PUBLIC_KADO_LINK_LABEL}
+          Create Token
         </Button>
       </Link>
     </StyledListForLinks>
   )
+
+  // Here we build the view content
+  let viewContent = <></>
 
   if (isMobile) {
     const triggerMenuButton = isOpen ? (
@@ -168,152 +164,188 @@ export function NavigationSidebar(_: NavigationSidebarProps) {
       </Button>
     )
 
-    return (
-      <StyledWrapperForMobile>
-        <Column gap={6}>
-          <Inline
-            align="center"
-            justifyContent="space-between"
-            css={{ padding: '0 $12' }}
-          >
+    // get viewContent for mobile
+    viewContent = shouldRenderBackButton ? (
+      <>
+        <StyledWrapperForMobile>
+          <Inline align="center" justifyContent="space-between">
+            <Column align="flex-start" css={{ flex: 0.3 }}>
+              {backButton}
+            </Column>
+
             <Link href="/" passHref>
-              <StyledDivForLogo as="a">
+              <Column
+                css={{ flex: 0.4, color: '$colors$black' }}
+                align="center"
+                as="a"
+              >
                 <Logo data-logo="" width="37px" height="47px" />
-                <div data-logo-label="">
-                  <Text
-                    variant="caption"
-                    color="error"
-                    css={{ padding: '0 0 $1 0' }}
-                  >
-                    {__TEST_MODE__ ? 'Testnet' : 'Beta'}
-                  </Text>
-                  <LogoText />
-                </div>
-              </StyledDivForLogo>
+              </Column>
             </Link>
-            {triggerMenuButton}
+            <Column align="flex-end" css={{ flex: 0.3 }}>
+              {triggerMenuButton}
+            </Column>
           </Inline>
           {isOpen && (
-            <Column css={{ padding: '$12 $12 0' }}>
+            <Column css={{ paddingTop: '$12' }}>
               {walletButton}
               {menuLinks}
             </Column>
           )}
-          <Divider />
-        </Column>
+        </StyledWrapperForMobile>
+        <Divider />
+      </>
+    ) : (
+      <StyledWrapperForMobile>
+        <Inline align="center" justifyContent="space-between">
+          <Link href="/" passHref>
+            <StyledDivForLogo as="a">
+              <Logo data-logo="" width="37px" height="47px" />
+              <div data-logo-label="">
+                <LogoText />
+              </div>
+            </StyledDivForLogo>
+          </Link>
+          {triggerMenuButton}
+        </Inline>
+        {isOpen && (
+          <Column css={{ paddingTop: '$12' }}>
+            {walletButton}
+            {menuLinks}
+          </Column>
+        )}
       </StyledWrapperForMobile>
+    )
+  } else {
+    // view content for non mobile
+    viewContent = (
+      <StyledWrapper>
+        <StyledMenuContainer>
+          <Link href="/" passHref>
+            <StyledDivForLogo as="a">
+              <Logo data-logo="" width="37px" height="47px" />
+              {/* <div data-logo-label=""> */}
+                <LogoText />
+              {/* </div> */}
+            </StyledDivForLogo>
+          </Link>
+
+          {walletButton}
+          {menuLinks}
+        </StyledMenuContainer>
+
+        <div>
+          <Text variant="legend" css={{ padding: '$4 $3' }}>
+            {APP_NAME} v{process.env.NEXT_PUBLIC_APP_VERSION}
+          </Text>
+          <Inline css={{ display: 'grid' }}>
+            <Button
+              iconLeft={<MoonIcon />}
+              variant="ghost"
+              size="large"
+              onClick={(e) => {
+                if (e.target !== document.querySelector('#theme-toggle')) {
+                  themeController.toggle()
+                }
+              }}
+              iconRight={
+                <ToggleSwitch
+                  id="theme-toggle"
+                  name="dark-theme"
+                  onChange={themeController.setDarkTheme}
+                  checked={themeController.theme.name === 'dark'}
+                  optionLabels={['Dark theme', 'Light theme']}
+                />
+              }
+            >
+              Dark mode
+            </Button>
+          </Inline>
+
+          <Divider offsetY="$6" />
+
+          <Column gap={4}>
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_FEEDBACK_LINK}
+              target="__blank"
+              variant="ghost"
+              size="large"
+              iconLeft={<FeedbackIcon />}
+              iconRight={<IconWrapper icon={<UpRightArrow />} />}
+            >
+              Provide feedback
+            </Button>
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_GOVERNANCE_LINK_URL}
+              target="__blank"
+              variant="ghost"
+              size="large"
+              iconLeft={<TreasuryIcon />}
+              iconRight={<IconWrapper icon={<UpRightArrow />} />}
+            >
+              {process.env.NEXT_PUBLIC_GOVERNANCE_LINK_LABEL}
+            </Button>
+          </Column>
+          <Inline gap={2} css={{ padding: '$20 0 $13' }}>
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_DISCORD_LINK}
+              target="__blank"
+              icon={<IconWrapper icon={<Discord />} />}
+              variant="ghost"
+              size="medium"
+              css={buttonIconCss}
+            />
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_TELEGRAM_LINK}
+              target="__blank"
+              icon={<IconWrapper icon={<Telegram />} />}
+              variant="ghost"
+              size="medium"
+              css={buttonIconCss}
+            />
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_TWITTER_LINK}
+              target="__blank"
+              icon={<IconWrapper icon={<Twitter />} />}
+              variant="ghost"
+              size="medium"
+              css={buttonIconCss}
+            />
+            <Button
+              as="a"
+              href={process.env.NEXT_PUBLIC_INTERFACE_GITHUB_LINK}
+              target="__blank"
+              icon={<IconWrapper icon={<Github />} />}
+              variant="ghost"
+              size="medium"
+              css={buttonIconCss}
+            />
+          </Inline>
+        </div>
+      </StyledWrapper>
     )
   }
 
+  // Here we return the view to be rendered
   return (
-    <StyledWrapper>
-      <StyledMenuContainer>
-        <Link href="/" passHref>
-          <StyledDivForLogo as="a">
-            <Logo data-logo="" width="37px" height="47px" />
-            <div data-logo-label="">
-              <Text
-                variant="caption"
-                color="error"
-                css={{ padding: '0 0 $1 0' }}
-              >
-                {__TEST_MODE__ ? 'Testnet' : 'Beta'}
-              </Text>
-              <LogoText />
-            </div>
-          </StyledDivForLogo>
-        </Link>
+    <>
+      <WalletSelectDialog
+        isShowing={isDialogOpen}
+        onWalletSelect={beginWalletConnection}
+        onRequestClose={() => setDialogOpen(false)}
+      />
 
-        {walletButton}
-        {menuLinks}
-      </StyledMenuContainer>
-      <Column>
-        <Text variant="legend" css={{ padding: '$4 $3' }}>
-          {APP_NAME} v{process.env.NEXT_PUBLIC_APP_VERSION}
-        </Text>
-        <Inline css={{ display: 'grid' }}>
-          <Button
-            iconLeft={<MoonIcon />}
-            variant="ghost"
-            size="large"
-            onClick={(e) => {
-              if (e.target !== document.querySelector('#theme-toggle')) {
-                themeController.toggle()
-              }
-            }}
-            iconRight={
-              <ToggleSwitch
-                id="theme-toggle"
-                name="dark-theme"
-                onChange={themeController.setDarkTheme}
-                checked={themeController.theme.name === 'dark'}
-                optionLabels={['Dark theme', 'Light theme']}
-              />
-            }
-          >
-            Dark mode
-          </Button>
-        </Inline>
-        <Column gap={4}>
-          <Button
-            as="a"
-            href={process.env.NEXT_PUBLIC_FEEDBACK_LINK}
-            target="__blank"
-            variant="ghost"
-            size="large"
-            iconLeft={<FeedbackIcon />}
-            iconRight={<IconWrapper icon={<UpRightArrow />} />}
-          >
-            Provide feedback
-          </Button>
-        </Column>
-        <Inline gap={2} css={{ padding: '$20 0 $13' }}>
-          <Button
-            as="a"
-            href={process.env.NEXT_PUBLIC_DISCORD_LINK}
-            target="__blank"
-            icon={<IconWrapper icon={<Discord />} />}
-            variant="ghost"
-            size="medium"
-            css={buttonIconCss}
-          />
-          <Button
-            as="a"
-            href={process.env.NEXT_PUBLIC_TELEGRAM_LINK}
-            target="__blank"
-            icon={<IconWrapper icon={<Telegram />} />}
-            variant="ghost"
-            size="medium"
-            css={buttonIconCss}
-          />
-          <Button
-            as="a"
-            href={process.env.NEXT_PUBLIC_TWITTER_LINK}
-            target="__blank"
-            icon={<IconWrapper icon={<Twitter />} />}
-            variant="ghost"
-            size="medium"
-            css={buttonIconCss}
-          />
-          <Button
-            as="a"
-            href={process.env.NEXT_PUBLIC_INTERFACE_GITHUB_LINK}
-            target="__blank"
-            icon={<IconWrapper icon={<Github />} />}
-            variant="ghost"
-            size="medium"
-            css={buttonIconCss}
-          />
-        </Inline>
-      </Column>
-    </StyledWrapper>
+      {viewContent}
+    </>
   )
 }
 
 const StyledWrapper = styled('div', {
-  flexBasis: '16.5rem',
-  flexGrow: 0,
-  flexShrink: 0,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
@@ -327,8 +359,7 @@ const StyledWrapper = styled('div', {
   width: '100%',
   height: '100%',
   maxHeight: '100vh',
-  minHeight: '100vh',
-  zIndex: 1,
+  zIndex: '$1',
 })
 
 const StyledWrapperForMobile = styled('div', {
@@ -336,7 +367,7 @@ const StyledWrapperForMobile = styled('div', {
   position: 'sticky',
   left: 0,
   top: 0,
-  padding: '$10 0 0',
+  padding: '$10 $12',
   backgroundColor: '$backgroundColors$base',
   zIndex: '$3',
 })

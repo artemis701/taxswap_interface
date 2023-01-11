@@ -5,12 +5,16 @@ const formatWithOneDecimal = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 })
 
-const oneMillion = 1e6
+const oneMillion = 1000000
+const hundredMillions = 100 * oneMillion
 
 export const formatCompactNumber = (
   value: number,
   kind: 'tokenAmount' | 'dollarValue' = 'dollarValue'
 ) => {
+  if (value > hundredMillions) {
+    return `${Math.round(value / hundredMillions)}M`
+  }
   if (value > oneMillion) {
     return `${formatWithOneDecimal.format(value / oneMillion)}M`
   }
@@ -28,15 +32,4 @@ export const formatCompactNumber = (
     })
   }
   return formatTokenBalance(value)
-}
-
-export const formatCurrency = (
-  value: number,
-  options?: Intl.NumberFormatOptions
-) => {
-  return Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    ...options,
-  }).format(value)
 }
